@@ -1,0 +1,48 @@
+{% load static %}
+{% load tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        .cateone {
+            color: red;
+
+        }
+        p{
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+        .ss{
+            color: chartreuse;
+        }
+    </style>
+    <script src="{% static 'jquery-min.js' %}"></script>
+    <script>
+
+        $(function () {
+            $('.catethree').click(function () {
+
+            });
+        });
+    </script>
+</head>
+<body>
+{{ cate }}
+{#{% for cateone in cate %}#}
+{#    <p class="cateone" id="{{ cateone.id }}">{{ cateone.name }}</p>#}
+{#    {% for catetwo in cateone.categorytwo_set.all %}#}
+{#        <p class="catetwo" id="{{ catetwo.id }}" style="margin-left: 20px; color: green">{{ catetwo.name }}</p>#}
+{#        {% for catethree in catetwo.categorythree_set.all %}#}
+{#            <p class="catethree" id="{{ catethree.id }}" style="margin-left: 40px; color: gold">{{ catethree.name }}</p>#}
+{#            <p style="margin-left: 60px;" class="context">{% get_spa catethree.id %}</p>#}
+{#        {% endfor %}#}
+{#    {% endfor %}#}
+{#{% endfor %}#}
+
+
+
+System check identified no issues (0 silenced).
+</body>
+</html>
