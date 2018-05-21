@@ -99,7 +99,7 @@ class GetPhoneTariff(object):
 
 
 if __name__ == '__main__':
-    a = GetPhoneTariff(phone=18526088455, password='020920')
+    a = GetPhoneTariff(phone=手机号, password='服务密码')
     info_dict = a.get_info()
     print(info_dict)
     print('-' * 50)
