@@ -8,7 +8,7 @@ class Turing_hadel(object):
     图灵机器人
     初始化传入文本信息，调用gettext获取图灵机器人思考后的文字
     '''
-    def __init__(self,info，key):
+    def __init__(self,info, key):
         self.url = 'http://www.tuling123.com/openapi/api'
         self.key = key
         self.info = info
@@ -31,13 +31,3 @@ class Turing_hadel(object):
         res = res.read()
 
         return res.decode(encoding='utf-8')
-
-
-if __name__ == '__main__':
-
-
-    info = "背一首李白的望庐山瀑布"
-
-    a = Turing_hadel(info)
-    b = eval(a.getText())
-    print(b,type(b))
