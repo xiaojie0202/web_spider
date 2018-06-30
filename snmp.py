@@ -12,7 +12,7 @@ class GetSnmp(object):
     def __init__(self, oid):
         self.engin = SnmpEngine()
         self.community = CommunityData("xi'an-ctc-5328-201408")
-        self.udp = UdpTransportTarget(('220.194.76.252', 161))
+        self.udp = UdpTransportTarget(('111.111.111.111', 161))
         self.mib = ObjectType(ObjectIdentity(oid))
 
     def get_snmp_table(self):
@@ -35,8 +35,8 @@ def callBack(snmpEngine, sendRequestHandle, errorIndication, errorStatus, errorI
 from pysnmp.proto.rfc1902 import OctetString
 engin = SnmpEngine()
 
-nextCmd(engin, CommunityData("xi'an-ctc-5328-201408"),UdpTransportTarget(("220.194.76.252", 161)), ContextData(), ObjectType(ObjectIdentity(".1.3.6.1.2.1.31.1.1.1.1")), cbFun=callBack)
-nextCmd(engin, CommunityData("xi'an-ctc-5328-201408"),UdpTransportTarget(("220.194.76.252", 161)), ContextData(), ObjectType(ObjectIdentity('.1.3.6.1.2.1.4.20.1.1')), cbFun=callBack)
+nextCmd(engin, CommunityData("xi'an-ctc-5328-201408"),UdpTransportTarget(("111.111.111.111", 161)), ContextData(), ObjectType(ObjectIdentity(".111.111.111.111")), cbFun=callBack)
+nextCmd(engin, CommunityData("xi'an-ctc-5328-201408"),UdpTransportTarget(("111.111.111.111", 161)), ContextData(), ObjectType(ObjectIdentity('.111.111.111.111')), cbFun=callBack)
 
 engin.transportDispatcher.runDispatcher()
 

@@ -121,7 +121,7 @@ class Chouti(object):
 if __name__ == '__main__':
 
     start = time.time()
-    c = Chouti(phone='8617612226296', password='wangyaojie150300')
+    c = Chouti(phone='*******', password='********')
     c.start(True)
     end = time.time()
     print('*' * 80)
