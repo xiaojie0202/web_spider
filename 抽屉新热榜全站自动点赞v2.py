@@ -21,14 +21,15 @@ class Chouti(object):
         self.session = requests.Session()
         # 用于存放每条新闻的ID的队列
         # self.links_id = queue.Queue()
+        self.proxies = {'https': 'https://101.236.60.225:8866'}
 
     def login_chouti(self):
         '''
         登陆抽屉，主要用于获取cookie
         :return:
         '''
-        self.session.get(url='https://dig.chouti.com/', headers=self._headers)
-        respones = self.session.post(url='https://dig.chouti.com/login', data=self._login_post_date, headers=self._headers, )  # 请求登录cookie
+        self.session.get(url='https://dig.chouti.com/', headers=self._headers, proxies=self.proxies)
+        respones = self.session.post(url='https://dig.chouti.com/login', data=self._login_post_date, headers=self._headers, proxies=self.proxies)  # 请求登录cookie
         # {"result":{"code":"9999", "message":"", "data":{"complateReg":"0","destJid":"cdu_51313511426"}}}
         respones = json.loads(respones.text)
         if respones['result']['code'] == '9999':
@@ -44,7 +45,7 @@ class Chouti(object):
         :param page: 页数
         :return: 响应Rsponse对象
         '''
-        respones = self.session.get(url='https://dig.chouti.com/all/hot/recent/%s' % page, headers=self._headers)
+        respones = self.session.get(url='https://dig.chouti.com/all/hot/recent/%s' % page, headers=self._headers, proxies=self.proxies)
         return respones
 
     def handel_chouti_html(self, future):
@@ -69,7 +70,7 @@ class Chouti(object):
         :return:
         '''
         for i in future.links_id:
-            text = self.session.post(url='https://dig.chouti.com/link/vote?linksId=%s' % i, headers=self._headers)
+            text = self.session.post(url='https://dig.chouti.com/link/vote?linksId=%s' % i, headers=self._headers, proxies=self.proxies)
             print(text.text)
 
     def cancel_recommend(self, futrre):
@@ -79,7 +80,7 @@ class Chouti(object):
         :return:
         '''
         for i in futrre.links_id:
-            text = self.session.post(url='https://dig.chouti.com/vote/cancel/vote.do', data={'linksId': i}, headers=self._headers)
+            text = self.session.post(url='https://dig.chouti.com/vote/cancel/vote.do', data={'linksId': i}, headers=self._headers, proxies=self.proxies)
             print(text.text)
 
     def start(self, option):
@@ -106,20 +107,21 @@ class Chouti(object):
         self.login_chouti()
         for index in range(1, 121):
             print('*'*20, '第%d页' % index, '*'*20)
-            respones = self.session.get(url='https://dig.chouti.com/all/hot/recent/%s' % index, headers=self._headers)
+            respones = self.session.get(url='https://dig.chouti.com/all/hot/recent/%s' % index, headers=self._headers, proxies=self.proxies)
             soup = BeautifulSoup(respones.text, 'lxml')
             news_div = soup.find(id='content-list')
             news_list = news_div.find_all('div', attrs={'class': 'item'})
             for i in news_list:
                 news_id = i.find('i')
                 text = self.session.post(url='https://dig.chouti.com/link/vote?linksId=%s' % news_id.text,
-                                    headers=self._headers)
+                                    headers=self._headers, proxies=self.proxies)
                 print(text.text)
 
 
 if __name__ == '__main__':
+
     start = time.time()
-    c = Chouti(phone='86**********', password='*************')
+    c = Chouti(phone='8617612226296', password='wangyaojie150300')
     c.start(True)
     end = time.time()
     print('*' * 80)

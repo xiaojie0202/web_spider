@@ -35,13 +35,13 @@ def get_proxies(data_queue, page_queue):
 def veryfi_proxies(data_queue, page_queue):
     while True:
         if page_queue.full():
-            print('验证代理结束')
             break
-        print('验证代理获取数据')
         data = data_queue.get(timeout=2)
         try:
+            start_time = time.time()
             requests.get(url='http://cn.bing.com/', proxies=data, timeout=5)
-            print(data)
+            end_time = time.time()
+            # data['response_time'] = end_time-start_time
             data_persistence(data)
             page_queue.put(data, timeout=2)
         except Exception:
@@ -51,7 +51,7 @@ def veryfi_proxies(data_queue, page_queue):
 
 # 数据持久化
 def data_persistence(data):
-    pass
+    print(data)
 
 
 def main(num):
