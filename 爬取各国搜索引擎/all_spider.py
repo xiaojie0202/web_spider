@@ -6,7 +6,7 @@ import time
 import os
 from selenium.common.exceptions import NoSuchElementException
 
-WEBDRIVER = r'E:\SDE\webdriver\chromedriver2.38.exe'
+WEBDRIVER = r'E:\SDE\webdriver\chromedriver2.39.exe'
 
 
 class BaseSpider(object):
