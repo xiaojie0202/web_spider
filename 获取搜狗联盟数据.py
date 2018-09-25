@@ -1,8 +1,7 @@
-'''
-    yuelai10
-ma817623
-http://union.sogou.com/
-'''
+"""
+批量获取搜狗联盟前天的点击量， 已经收入
+
+"""
 from bs4 import BeautifulSoup
 from hashlib import md5
 from tkinter import ttk
