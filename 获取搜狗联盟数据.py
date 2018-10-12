@@ -57,9 +57,10 @@ class RClient(object):
         files = {'image': ('a.jpg', im)}
         while True:
             r = requests.post('http://api.ruokuai.com/create.json', data=params, files=files, headers=self.headers)
-            print(r.text)
-            if r.text.find('Error') == -1:
-                return json.loads(r.text)
+            if r.status_code == 200:
+                print(r.text)
+                if r.text.find('Error') == -1:
+                    return json.loads(r.text)
 
     def query_user(self):
         # http://api.ruokuai.com/info.json
@@ -75,12 +76,9 @@ class RClient(object):
             return False
 
 
-
-
-
 class SouGouGui(object):
     def __init__(self):
-        self.rk = None # RClient 实例
+        self.rk = None  # RClient 实例
         self.uset_list = []
         self.data_list = []  # 最终保存到excel中
         self.task = None
@@ -189,6 +187,7 @@ class SouGouGui(object):
                 pwd = row[1].value
                 self.uset_list.append([user.strip(), pwd.strip()])
                 self.bj_info_table.insert('', 'end', value=(user.strip(), '还未开始', '还未开始'))
+            print(self.uset_list)
         except Exception as e:
             tkinter.messagebox.showerror('失败', '导入文件失败(%s)' % e)
             self.uset_list = []
@@ -216,16 +215,24 @@ class SouGouGui(object):
         try:
             count = 0
             for i in self.uset_list:
-                if count >= 18:
-                    self.bj_info_table.insert('', 'end', value=('暂停6分钟', '暂停6分钟', '暂停6分钟'))
-                    time.sleep(360)
-                    count = 0
-                    self.bj_info_table.insert('', 'end', value=('继续执行任务', '继续执行任务', '继续执行任务'))
-                djj, sr = self.get_sougou_info(user=i[0], pwd=i[1], rk_obj=self.rk)
-                print([i[0], i[1], djj, sr])
-                worksheet.append([i[0], i[1], djj, sr])
-                workbook.save(RESULT_EXCEL)
-                self.bj_info_table.insert('', 'end', value=(i[0], djj, sr))
+                while True:
+                    print('开始登陆:%s' % str(i))
+                    if count >= 18:
+                        self.bj_info_table.insert('', 'end', value=('暂停6分钟', '暂停6分钟', '暂停6分钟'))
+                        time.sleep(360)
+                        count = 0
+                        self.bj_info_table.insert('', 'end', value=('继续执行任务', '继续执行任务', '继续执行任务'))
+                    try:
+                        djj, sr, d3, d4, d5, d6 = self.get_sougou_info(user=i[0], pwd=i[1], rk_obj=self.rk)
+                        print([i[0], i[1], djj, sr, d3, d4])
+                        worksheet.append([i[0], i[1], djj, sr, d3, d4, d5, d6])
+                        workbook.save(RESULT_EXCEL)
+                        self.bj_info_table.insert('', 'end', value=(i[0], djj, sr))
+                        break
+                    except Exception as e:
+                        with open(LOG_FILE, 'a+') as f:
+                            f.write('[%s]浮点数据%s\n' % (i[0], e))
+                        continue
                 count += 1
         except Exception as e:
             tkinter.messagebox.showerror('出现异常', '程序出现异常:%s' % e)
@@ -262,7 +269,7 @@ class SouGouGui(object):
                 'activecode': activecode
             }
             login_response = session.post(url='http://union.sogou.com/loginauth.action', headers=headers, data=data)
-            if login_response.url.endswith(user):
+            if login_response.url.endswith(user.lower()):
                 with open(LOG_FILE, 'a+') as f:
                     f.write('[%s]登陆成\n' % user)
                 print('登陆成功')
@@ -274,7 +281,7 @@ class SouGouGui(object):
                 if info.find('用户名或密码不正确') != -1:
                     with open(LOG_FILE, 'a+') as f:
                         f.write('[%s]用户名或密码不正确\n' % user)
-                    return '用户名或密码不正确', '用户名或密码不正确'
+                    return '用户名或密码不正确', '用户名或密码不正确', '', '', '', ''
                 if info.find('验证码无效') != -1:
                     continue
 
@@ -285,12 +292,39 @@ class SouGouGui(object):
             table = soup.find(name='table', id='tableTips')
             tr = table.find_all(name='tr')[1]
             td_list = tr.find_all(name='td')
-            print(td_list)
+
+            # 转到本月的数据页面
+            this_year_response = session.post(url='http://union.sogou.com/index.action', headers=headers,
+                                              data={'searchBean.timeSegment': 'thismonth'})
+            soup = BeautifulSoup(this_year_response.text, 'lxml')
+            year_table = soup.find(name='table', id='tableTips')
+            year_tr = year_table.find_all(name='tr')[1]
+            year_td_list = year_tr.find_all(name='td')
+            # 转到上一月
+            pre_yea_response = session.post(url='http://union.sogou.com/index.action', headers=headers,
+                                            data={'searchBean.timeSegment': 'lastmonth'})
+            soup = BeautifulSoup(pre_yea_response.text, 'lxml')
+            year_table = soup.find(name='table', id='tableTips')
+            year_tr = year_table.find_all(name='tr')[1]
+            pre_td_list = year_tr.find_all(name='td')
+
+            try:
+                d1, d2 = td_list[-2].text, td_list[-1].text
+                d3, d4 = year_td_list[-2].text, year_td_list[-1].text
+                d5, d6 = pre_td_list[-2].text, pre_td_list[-1].text
+            except Exception as e:
+                return '数据抓取错误', '%s' % str(td_list), '', '', '', ''
+
             with open(LOG_FILE, 'a+') as f:
-                f.write('[%s]读取到数据[%s, %s]\n' % (user, td_list[-2].text, td_list[-1].text))
-            return td_list[-2].text, td_list[-1].text
+                f.write('[%s]读取到数据[%s, %s, %s, %s]\n' % (user, d1, d2, d3, d4))
+
+            return d1, d2, d3, d4, d5, d6
+
+
+
+
+
 if __name__ == '__main__':
     a = SouGouGui()
-    pass
     # rk = RClient(username='632673016', password='knp158169')
     # print(get_sougou_info(user='yuelai10', pwd='ma817623', rk_obj=rk))

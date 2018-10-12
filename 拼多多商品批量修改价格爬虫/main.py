@@ -285,7 +285,7 @@ class PddUpdate(object):
             except Exception:
                 return False, response_json
         else:
-            return True, ''
+            return True, '价格更新成功！'
 
     # 更新一页商品
     def update_page_goods(self, page, operator_dict):
@@ -349,7 +349,7 @@ class PddGUI(object):
 
         self.root = tkinter.Tk()
         self.root_width = 800  # 窗口款多
-        self.root_height = 600  # 窗口高度
+        self.root_height = 800  # 窗口高度
 
         self.init_root_wind()  # 初始化主窗口信息
 
@@ -496,6 +496,28 @@ class PddGUI(object):
         # 停止更新多页价格
         self.stop_btn = tkinter.Button(self.fooder_btn_frame, text='停止更新多页价格', fg='red', command=self.stop_update_task)
         self.stop_btn.pack(side=tkinter.LEFT, padx=20)
+
+        # ————————————————V2.0 版本新加功能， 更加商品ID更新商品
+        self.new_v2_frame = tkinter.Frame(self.root)
+        self.new_v2_frame.pack(fill=tkinter.X, padx=60, pady=10)
+
+        tkinter.Label(self.new_v2_frame, text='商品ID:', font=('黑体', 16)).pack(side=tkinter.LEFT)
+
+        # 商品ID 的输入框
+        self.goods_id_text_frame = tkinter.Frame(self.new_v2_frame)
+        self.goods_id_text_frame.pack(side=tkinter.LEFT, padx=10)
+
+        self.impot_goods_text = tkinter.Text(self.goods_id_text_frame, width=60, height=12)
+        self.vbar2 = ttk.Scrollbar(self.goods_id_text_frame, orient=tkinter.VERTICAL,
+                                   command=self.impot_goods_text.yview)
+        self.impot_goods_text.configure(yscrollcommand=self.vbar2.set)
+        self.impot_goods_text.grid(row=0, column=0, sticky=tkinter.NSEW)
+        self.vbar2.grid(row=0, column=1, sticky=tkinter.NS)
+
+        # 更新输入框的商品按钮
+        self.update_goods_id_btn = tkinter.Button(self.new_v2_frame, text='根据商品ID更新', fg='red',
+                                                  command=self.update_goods_id_func)
+        self.update_goods_id_btn.pack(side=tkinter.LEFT)
 
         self.root.mainloop()
 
@@ -731,7 +753,7 @@ class PddGUI(object):
                         return
                 # 创建多线程进行更新
                 self.thread_task[self.select_user_key] = threading.Thread(target=self.update_dpage_goods_task, args=(
-                user_obj, start_page_value, end_page_value, operator_dict,))
+                    user_obj, start_page_value, end_page_value, operator_dict,))
                 self.thread_task[self.select_user_key].start()
 
         except Exception as e:
@@ -782,7 +804,8 @@ class PddGUI(object):
                         erro['erromsg'] = erromsg
                         erro_update.append(erro)
                         print('[EERO]%s-->更新到草稿失败错误信息:[%s]' % (good['goods_name'], erromsg))
-                        self.goods_list_table.insert("", "end", values=(erro['id'], erro['goods_name'], erro['erromsg']))
+                        self.goods_list_table.insert("", "end",
+                                                     values=(erro['id'], erro['goods_name'], erro['erromsg']))
                         self.goods_list_table.update()
                         continue
                     # 提交到数据库
@@ -792,7 +815,8 @@ class PddGUI(object):
                         erro['erromsg'] = erromsg
                         erro_update.append(erro)
                         print('[EERO]%s-->更新到数据库失败错误信息:[%s]' % (good['goods_name'], erromsg))
-                        self.goods_list_table.insert("", "end", values=(erro['id'], erro['goods_name'], erro['erromsg']))
+                        self.goods_list_table.insert("", "end",
+                                                     values=(erro['id'], erro['goods_name'], erro['erromsg']))
                         self.goods_list_table.update()
                         continue
                     print('[SUCCESS]%s-->价格更新成功' % good['goods_name'])
@@ -812,13 +836,103 @@ class PddGUI(object):
             print(operator_dict)
         tkinter.messagebox.showinfo('SUCCESS', '%s用户更新%s-%s页商品价格完毕' % (user_obj.username, start, end))
 
+    # 根据商品ID 进行更新商品
+    def update_goods_id_func(self):
+        try:
+            market_price = [self.scj_ys_selsect.get(), str(float(self.scj_value.get()))]
+            multi_price = [self.tgj_ys_selsect.get(), str(float(self.tgj_value.get()))]
+            price = [self.dmj_ys_selsect.get(), str(float(self.dmj_value.get()))]
+            operator_dict = {'market_price': market_price, 'multi_price': multi_price, 'price': price}
+            if self.dmj_value.get() == '0' and self.tgj_value.get() == '0' and self.scj_value.get() == '0':
+                tkinter.messagebox.showinfo('警告', '未输入价格更新情况！')
+                return
+            if not self.select_user_key:
+                tkinter.messagebox.showinfo('未现在用户', '请先选择用户再进行操作!')
+                return
+
+            user_obj = self.login_user_dict[self.select_user_key]
+
+            if self.thread_task.get(self.select_user_key, None):
+                if self.thread_task[self.select_user_key].isAlive():
+                    tkinter.messagebox.showinfo('当前用户有任务执行', '当前用户有任务执行！， 无法添加新任务')
+                    return
+
+            # 获取到输入框的数据
+            goods_text = self.impot_goods_text.get(1.0, tkinter.END)
+            print(goods_text)
+            if goods_text.strip():
+                goods_id = [int(i) for i in goods_text.split() if i]
+            else:
+                tkinter.messagebox.showinfo('！！', '请输入商品ID 后进行操作！')
+                return
+
+
+            print('要创建任务了')
+            # 创建多线程进行更新
+            self.thread_task[self.select_user_key] = threading.Thread(target=self.update_goods_id_task,
+                                                                      args=(goods_id, user_obj, operator_dict, ))
+            self.thread_task[self.select_user_key].start()
+            print(goods_id)
+
+        except Exception as e:
+            tkinter.messagebox.showerror('输入有误', '%s' % e)
+
+    # 线程内的任务， 根据商品ID更新商品
+    def update_goods_id_task(self, goodlist, user_obj, operator_dict):
+        # 清空table
+        for _ in map(self.goods_list_table.delete, self.goods_list_table.get_children("")):
+            pass
+        try:
+            for good in goodlist:
+                time.sleep(10)
+                # 获取草稿ID
+                info, goods_commit_id = user_obj.get_goods_commit_id(good)
+                if not info:
+                    print('[EERO]%s-->更新到草稿失败错误信息:[%s]' % (good, goods_commit_id))
+                    self.goods_list_table.insert("", "end",
+                                                 values=(good, '根据商品ID更新信息', goods_commit_id))
+                    self.goods_list_table.update()
+                    continue
+                print('goods_commit_id', goods_commit_id)
+                edit_json = user_obj.get_goods_edit_info(goods_commit_id)
+                print('edit_json', edit_json)
+                # 拼接完毕需要编辑的商品信息
+                goods_json = user_obj.margen_post_date(edit_json, operator_dict)
+                print('goods_json', goods_json)
+                # 提交到草稿
+                result, erromsg = user_obj.update_edit_goods(goods_json)
+                print(result, erromsg)
+
+                if not result:
+                    print('[EERO]%s-->更新到草稿失败错误信息:[%s]' % (good, erromsg))
+                    self.goods_list_table.insert("", "end",
+                                                 values=(good, goods_json['goods_name'], erromsg))
+                    self.goods_list_table.update()
+                    continue
+                # 提交到数据库
+                result, erromsg = user_obj.commit_edit_goods(goods_commit_id, get_crawlerinfo())
+                if not result:
+                    print('[EERO]%s-->更新到数据库失败错误信息:[%s]' % (goods_json['goods_name'], erromsg))
+                    self.goods_list_table.insert("", "end",
+                                                 values=(good, goods_json['goods_name'], erromsg))
+                    self.goods_list_table.update()
+                    continue
+                print('[SUCCESS]%s-->价格更新成功' % goods_json['goods_name'])
+                self.goods_list_table.insert("", "end", values=(good, goods_json['goods_name'], erromsg))
+                self.goods_list_table.update()
+            tkinter.messagebox.showinfo('更新完毕', '更新完毕！')
+        except Exception as e:
+            print(e)
+            tkinter.messagebox.showerror('错误', '当前商品更新失败！%s' % e)
+
+
     # 停止当前更新多页的任务
     def stop_update_task(self):
         if self.thread_task.get(self.select_user_key, None):
             if self.thread_task[self.select_user_key].isAlive():
                 self.stop_thread(self.thread_task[self.select_user_key])
                 self.thread_task.pop(self.select_user_key)
-                tkinter.messagebox.showinfo('信息', '当前用户停止更新多页商品价格成功！')
+                tkinter.messagebox.showinfo('信息', '当前用户的任务成功')
 
     # 强制结束线程
     def stop_thread(self, thread, exctype=SystemExit):
@@ -836,3 +950,10 @@ class PddGUI(object):
 
 if __name__ == '__main__':
     a = PddGUI()
+    # cookies = None
+    # with open('userinfo.pdd', 'r') as f:
+    #     a = json.loads(f.read())
+    #     print(a)
+    #     cookies = a['cookies']
+    # a = PddUpdate(cookies)
+    # print(a.get_goods_commit_id('152145413546')) # (False, '商品不存在')
